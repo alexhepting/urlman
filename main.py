@@ -57,14 +57,42 @@ class UrlManagerApp:
         self.app = tk.Tk()
         self.app.title("URL Manager")
 
-        # ... (create and place widgets, set up event handlers)
+        self.url_label = tk.Label(self.app, text="URL:")
+        self.url_label.grid(row=0, column=0, sticky='e')
+        self.url_entry = tk.Entry(self.app)
+        self.url_entry.grid(row=0, column=1, padx=5, pady=5, sticky='we', columnspan=2)
 
-    # Define event handlers
+        self.description_label = tk.Label(self.app, text="Description:")
+        self.description_label.grid(row=1, column=0, sticky='e')
+        self.description_entry = tk.Entry(self.app)
+        self.description_entry.grid(row=1, column=1, padx=5, pady=5, sticky='we', columnspan=2)
+
+        self.add_button = tk.Button(self.app, text="Add URL", command=self.add_url)
+        self.add_button.grid(row=0, column=3, padx=5, pady=5, sticky='we')
+
+        self.delete_button = tk.Button(self.app, text="Delete Selected", command=self.delete_url)
+        self.delete_button.grid(row=1, column=3, padx=5, pady=5, sticky='we')
+
+        self.url_listbox = tk.Listbox(self.app, width=50, height=10)
+        self.url_listbox.grid(row=2, column=0, padx=5, pady=5, sticky='nswe', columnspan=4)
+        self.url_listbox.grid_rowconfigure(0, weight=1)
+        self.url_listbox.grid_columnconfigure(0, weight=1)
+
+        self.export_csv_button = tk.Button(self.app, text="Export to CSV", command=self.export_csv)
+        self.export_csv_button.grid(row=3, column=0, padx=5, pady=5, sticky='we')
+
+        self.export_json_button = tk.Button(self.app, text="Export to JSON", command=self.export_json)
+        self.export_json_button.grid(row=3, column=1, padx=5, pady=5, sticky='we')
+
+        self.export_xml_button = tk.Button(self.app, text="Export to XML", command=self.export_xml)
+        self.export_xml_button.grid(row=3, column=2, padx=5, pady=5, sticky='we')
+
+        self.refresh_list()
 
     def add_url(self):
         url = self.url_entry.get()
         description = self.description_entry.get()
-        if url and description:
+        if self.validate_url(url) and self.validate_description(description):
             self.url_manager.add_url(url, description)
             self.refresh_list()
             self.url_entry.delete(0, tk.END)
@@ -75,6 +103,18 @@ class UrlManagerApp:
         if selected_id:
             self.url_manager.delete_url(selected_id[0]+1)
             self.refresh_list()
+
+    def validate_url(self, url):
+        if not url:
+            messagebox.showerror("Error", "Please enter a URL.")
+            return False
+        return True
+
+    def validate_description(self, description):
+        if not description:
+            messagebox.showerror("Error", "Please enter a description.")
+            return False
+        return True
 
     def refresh_list(self):
         self.url_listbox.delete(0, tk.END)
