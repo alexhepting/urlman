@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URL Manager</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <h1>URL Manager</h1>
+
+    <form id="urlForm">
+        <input type="text" id="urlInput" placeholder="Enter URL">
+        <input type="text" id="descriptionInput" placeholder="Enter Description">
+        <button type="submit">Add URL</button>
+    </form>
+
+    <ul id="urlList"></ul>
+
+    <button id="exportCsv">Export to CSV</button>
+    <button id="exportJson">Export to JSON</button>
+    <button id="exportXml">Export to XML</button>
+
+    <script>
+        $(document).ready(function() {
+            function updateList() {
+                $("#urlList").empty();
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    const value = JSON.parse(localStorage.getItem(key));
+                    $("#urlList").append(`<li data-key="${key}">${value.description} - ${value.url} <button class="editBtn">Edit</button> <button class="deleteBtn">Delete</button> <button class="openBtn">Open</button></li>`);
+                }
+            }
+
+            $("#urlForm").submit(function(e) {
+                e.preventDefault();
+                const url = $("#urlInput").val();
+                const description = $("#descriptionInput").val();
+                const key = Date.now().toString();
+                localStorage.setItem(key, JSON.stringify({ url, description }));
+                updateList();
+                $("#urlInput, #descriptionInput").val('');
+            });
+
+            $(document).on('click', '.editBtn', function() {
+                const key = $(this).parent().data('key');
+                const value = JSON.parse(localStorage.getItem(key));
+                $("#urlInput").val(value.url);
+                $("#descriptionInput").val(value.description);
+                localStorage.removeItem(key);
+                updateList();
+            });
+
+            $(document).on('click', '.deleteBtn', function() {
+                const key = $(this).parent().data('key');
+                localStorage.removeItem(key);
+                updateList();
+            });
+
+            $(document).on('click', '.openBtn', function() {
+                const key = $(this).parent().data('key');
+                const value = JSON.parse(localStorage.getItem(key));
+                window.open(value.url, '_blank');
+            });
+
+            function promptFileName(callback) {
+                const fileName = prompt("Please enter a file name:", "urls");
+                if (fileName !== null && fileName !== "") {
+                    callback(fileName);
+                }
+            }
+
+            function convertToCSV() {
+                let csvContent = "data:text/csv;charset=utf-8," + 
+                    "Description,URL\n";
+
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    const value = JSON.parse(localStorage.getItem(key));
+                    csvContent += `${value.description},${value.url}\n`;
+                }
+
+                return csvContent;
+            }
+
+            function convertToJSON() {
+                let data = {};
+
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    const value = JSON.parse(localStorage.getItem(key));
+                    data[key] = value;
+                }
+
+                return JSON.stringify(data, null, 2);
+            }
+
+            function convertToXML() {
+                let xmlContent = '<?xml version="1.0" encoding="UTF-8"?>\n<urls>\n';
+
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    const value = JSON.parse(localStorage.getItem(key));
+                    xmlContent += `\t<url>\n\t\t<description>${value.description}</description>\n\t\t<link>${value.url}</link>\n\t</url>\n`;
+                }
+
+                xmlContent += '</urls>';
+                return xmlContent;
+            }
+
+            $("#exportCsv").click(function() {
+                promptFileName(function(fileName) {
+                    const csvContent = convertToCSV();
+                    const encodedUri = encodeURI(csvContent);
+                    const link = document.createElement("a");
+                    link.setAttribute("href", encodedUri);
+                    link.setAttribute("download", fileName + ".csv");
+                    document.body.appendChild(link);
+                    link.click();
+                });
+            });
+
+            $("#exportJson").click(function() {
+                promptFileName(function(fileName) {
+                    const jsonContent = convertToJSON();
+                    const encodedUri = encodeURI("data:text/json;charset=utf-8," + jsonContent);
+                    const link = document.createElement("a");
+                    link.setAttribute("href", encodedUri);
+                    link.setAttribute("download", fileName + ".json");
+                    document.body.appendChild(link);
+                    link.click();
+                });
+            });
+
+            $("#exportXml").click(function() {
+                promptFileName(function(fileName) {
+                    const xmlContent = convertToXML();
+                    const encodedUri = encodeURI("data:text/xml;charset=utf-8," + xmlContent);
+                    const link = document.createElement("a");
+                    link.setAttribute("href", encodedUri);
+                    link.setAttribute("download", fileName + ".xml");
+                    document.body.appendChild(link);
+                    link.click();
+                });
+            });
+
+            updateList();
+        });
+    </script>
+</body>
+</html>
