@@ -1,67 +1,105 @@
-import sqlite3
 import tkinter as tk
-from tkinter import messagebox
+from tkinter import messagebox, filedialog
+import csv
+import json
+from xml.etree import ElementTree as ET
+import sqlite3
 
-# Initialize SQLite database
-conn = sqlite3.connect('urls.db')
-c = conn.cursor()
-c.execute('''CREATE TABLE IF NOT EXISTS urls
-             (id INTEGER PRIMARY KEY,
-              url TEXT,
-              description TEXT)''')
-conn.commit()
+class UrlManager:
+    def __init__(self, db_name='urls.db'):
+        self.conn = sqlite3.connect(db_name)
+        self.c = self.conn.cursor()
+        self.c.execute('''CREATE TABLE IF NOT EXISTS urls
+                          (id INTEGER PRIMARY KEY,
+                           url TEXT,
+                           description TEXT)''')
+        self.conn.commit()
 
-# Define functions for database operations
-def add_url():
-    url = url_entry.get()
-    description = description_entry.get()
-    c.execute("INSERT INTO urls (url, description) VALUES (?, ?)", (url, description))
-    conn.commit()
-    refresh_list()
+    def add_url(self, url, description):
+        self.c.execute("INSERT INTO urls (url, description) VALUES (?, ?)", (url, description))
+        self.conn.commit()
 
-def delete_url():
-    selected_id = url_listbox.curselection()
-    if selected_id:
-        c.execute("DELETE FROM urls WHERE id=?", (selected_id[0]+1,))
-        conn.commit()
-        refresh_list()
+    def delete_url(self, id):
+        self.c.execute("DELETE FROM urls WHERE id=?", (id,))
+        self.conn.commit()
 
-def refresh_list():
-    url_listbox.delete(0, tk.END)
-    for row in c.execute("SELECT * FROM urls"):
-        url_listbox.insert(tk.END, f"{row[2]} - {row[1]}")
+    def get_urls(self):
+        return self.c.execute("SELECT * FROM urls")
 
-# Create the main application window
-app = tk.Tk()
-app.title("URL Manager")
+    def export_csv(self, file_name):
+        with open(file_name, mode='w', newline='') as file:
+            writer = csv.writer(file)
+            writer.writerow(["Description", "URL"])
+            for row in self.get_urls():
+                writer.writerow([row[2], row[1]])
 
-# Create and place widgets
-url_label = tk.Label(app, text="URL:")
-url_label.grid(row=0, column=0, sticky='e')
-url_entry = tk.Entry(app)
-url_entry.grid(row=0, column=1, padx=5, pady=5, sticky='we', columnspan=2)
+    def export_json(self, file_name):
+        urls = []
+        for row in self.get_urls():
+            urls.append({"description": row[2], "url": row[1]})
+        with open(file_name, 'w') as file:
+            json.dump(urls, file, indent=4)
 
-description_label = tk.Label(app, text="Description:")
-description_label.grid(row=1, column=0, sticky='e')
-description_entry = tk.Entry(app)
-description_entry.grid(row=1, column=1, padx=5, pady=5, sticky='we', columnspan=2)
+    def export_xml(self, file_name):
+        urls = ET.Element('urls')
+        for row in self.get_urls():
+            url = ET.SubElement(urls, 'url')
+            description = ET.SubElement(url, 'description')
+            description.text = row[2]
+            link = ET.SubElement(url, 'link')
+            link.text = row[1]
+        tree = ET.ElementTree(urls)
+        tree.write(file_name)
 
-add_button = tk.Button(app, text="Add URL", command=add_url)
-add_button.grid(row=0, column=3, padx=5, pady=5, sticky='we')
+class UrlManagerApp:
+    def __init__(self):
+        self.url_manager = UrlManager()
+        self.app = tk.Tk()
+        self.app.title("URL Manager")
 
-delete_button = tk.Button(app, text="Delete Selected", command=delete_url)
-delete_button.grid(row=1, column=3, padx=5, pady=5, sticky='we')
+        # ... (create and place widgets, set up event handlers)
 
-url_listbox = tk.Listbox(app, width=50, height=10)
-url_listbox.grid(row=2, column=0, padx=5, pady=5, sticky='nswe', columnspan=4)
-url_listbox.grid_rowconfigure(0, weight=1)
-url_listbox.grid_columnconfigure(0, weight=1)
+    # Define event handlers
 
-# Populate the listbox
-refresh_list()
+    def add_url(self):
+        url = self.url_entry.get()
+        description = self.description_entry.get()
+        if url and description:
+            self.url_manager.add_url(url, description)
+            self.refresh_list()
+            self.url_entry.delete(0, tk.END)
+            self.description_entry.delete(0, tk.END)
 
-# Start the GUI application
-app.mainloop()
+    def delete_url(self):
+        selected_id = self.url_listbox.curselection()
+        if selected_id:
+            self.url_manager.delete_url(selected_id[0]+1)
+            self.refresh_list()
 
-# Close the database connection when the app exits
-conn.close()
+    def refresh_list(self):
+        self.url_listbox.delete(0, tk.END)
+        for row in self.url_manager.get_urls():
+            self.url_listbox.insert(tk.END, f"{row[2]} - {row[1]}")
+
+    def export_csv(self):
+        file_name = filedialog.asksaveasfilename(defaultextension=".csv", filetypes=[("CSV Files", "*.csv")])
+        if file_name:
+            self.url_manager.export_csv(file_name)
+
+    def export_json(self):
+        file_name = filedialog.asksaveasfilename(defaultextension=".json", filetypes=[("JSON Files", "*.json")])
+        if file_name:
+            self.url_manager.export_json(file_name)
+
+    def export_xml(self):
+        file_name = filedialog.asksaveasfilename(defaultextension=".xml", filetypes=[("XML Files", "*.xml")])
+        if file_name:
+            self.url_manager.export_xml(file_name)
+
+    def run(self):
+        self.app.mainloop()
+        self.url_manager.conn.close()
+
+if __name__ == '__main__':
+    app = UrlManagerApp()
+    app.run()
