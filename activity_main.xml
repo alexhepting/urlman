@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp"
+    tools:context=".MainActivity">
+
+    <EditText
+        android:id="@+id/urlEntry"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="URL" />
+
+    <EditText
+        android:id="@+id/descriptionEntry"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Description" />
+
+    <EditText
+        android:id="@+id/categoryEntry"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Category" />
+
+    <Button
+        android:id="@+id/addUrlButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Add URL" />
+
+    <Button
+        android:id="@+id/deleteSelectedButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Delete Selected" />
+
+    <ListView
+        android:id="@+id/urlList"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp" />
+
+    <Button
+        android:id="@+id/exportCsvButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Export to CSV" />
+
+    <Button
+        android:id="@+id/exportJsonButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Export to JSON" />
+
+    <Button
+        android:id="@+id/exportXmlButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Export to XML" />
+
+    <Button
+        android:id="@+id/showInsightsButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Show Insights" />
+
+</LinearLayout>
